@@ -69,7 +69,7 @@ Browser (User A)                         Browser (User B)
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Laravel-Reverb.git
+   git clone https://github.com/Motawash-Semeen/Laravel-Reverb.git
    cd Laravel-Reverb
    ```
 
