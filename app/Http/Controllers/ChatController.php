@@ -3,23 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Events\MessageSent;
-use App\Models\Message;
-use Illuminate\Http\Request;
+use App\Http\Requests\Chat\SendMessageRequest;
+use App\Services\ChatService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class ChatController extends Controller
 {
+    public function __construct(
+        protected ChatService $chatService
+    ) {}
+
     /**
      * Show the chat page.
      */
-    public function index()
+    public function index(): View
     {
-        $messages = Message::with('user')
-            ->latest('id')
-            ->take(50)
-            ->get()
-            ->sortBy('id')
-            ->values();
+        $messages = $this->chatService->getRecentMessages();
 
         return view('chat', compact('messages'));
     }
@@ -27,18 +28,12 @@ class ChatController extends Controller
     /**
      * Send a new message.
      */
-    public function sendMessage(Request $request)
+    public function sendMessage(SendMessageRequest $request): JsonResponse
     {
-        $request->validate([
-            'message' => 'required|string|max:1000',
-        ]);
-
-        $message = Message::create([
-            'user_id' => Auth::id(),
-            'message' => $request->message,
-        ]);
-
-        $message->load('user');
+        $message = $this->chatService->storeMessage(
+            Auth::id(),
+            $request->validated('message')
+        );
 
         broadcast(new MessageSent(Auth::user(), $message));
 
