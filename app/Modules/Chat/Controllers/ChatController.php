@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Modules\Chat\Controllers;
 
-use App\Events\MessageSent;
-use App\Http\Requests\Chat\SendMessageRequest;
-use App\Services\ChatService;
+use App\Http\Controllers\Controller;
+use App\Modules\Chat\Events\MessageSent;
+use App\Modules\Chat\Requests\SendMessageRequest;
+use App\Modules\Chat\Services\ChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;

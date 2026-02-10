@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Chat\Services;
 
-use App\Models\Message;
+use App\Modules\Chat\Models\Message;
 use Illuminate\Support\Collection;
 
 class ChatService
