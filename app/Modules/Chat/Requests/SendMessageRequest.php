@@ -14,7 +14,14 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'message' => ['required', 'string', 'max:1000'],
+            'message' => ['nullable', 'string', 'max:1000', 'required_without:attachment'],
+            'attachment' => [
+                'nullable',
+                'file',
+                'max:10240',
+                'required_without:message',
+                'mimes:jpg,jpeg,png,gif,pdf,doc,docx,txt,zip',
+            ],
         ];
     }
 }

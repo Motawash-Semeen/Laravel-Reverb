@@ -31,16 +31,27 @@ class ChatController extends Controller
      */
     public function sendMessage(SendMessageRequest $request): JsonResponse
     {
+        $validated = $request->validated();
+
         $message = $this->chatService->storeMessage(
             Auth::id(),
-            $request->validated('message')
+            $validated['message'] ?? null,
+            $request->file('attachment')
         );
 
         broadcast(new MessageSent(Auth::user(), $message));
 
         return response()->json([
             'status' => 'Message sent!',
-            'message' => $message,
+            'message' => [
+                'id' => $message->id,
+                'message' => $message->message,
+                'created_at' => $message->created_at->toIso8601String(),
+                'attachment_name' => $message->attachment_name,
+                'attachment_mime' => $message->attachment_mime,
+                'attachment_size' => $message->attachment_size,
+                'attachment_url' => $message->attachment_url,
+            ],
         ]);
     }
 }
