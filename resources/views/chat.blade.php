@@ -146,7 +146,9 @@
         <div class="message-wrapper {{ $msg->user_id === Auth::id() ? 'mine' : 'others' }}" data-message-id="{{ $msg->id }}">
             <span class="message-sender">{{ $msg->user->name }}</span>
             <div class="message-bubble">{{ $msg->message }}</div>
-            <span class="message-time">{{ $msg->created_at->format('h:i A') }}</span>
+            <span class="message-time" data-timestamp="{{ $msg->created_at->toIso8601String() }}">
+                {{ $msg->created_at->format('h:i A') }}
+            </span>
         </div>
         @empty
         <div class="no-messages" id="no-messages">No messages yet. Say hello! 👋</div>
@@ -177,7 +179,29 @@
             .filter((id) => Number.isFinite(id))
     );
 
+    function formatMessageTime(timestamp) {
+        const date = timestamp ? new Date(timestamp) : new Date();
+
+        if (Number.isNaN(date.getTime())) {
+            return new Date().toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+            });
+        }
+
+        return date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        });
+    }
+
     // Scroll to bottom on page load
+    document.querySelectorAll('.message-time[data-timestamp]').forEach((timeNode) => {
+        timeNode.textContent = formatMessageTime(timeNode.dataset.timestamp);
+    });
+
     chatBox.scrollTop = chatBox.scrollHeight;
 
     // Send message on Enter key
@@ -250,8 +274,9 @@
 
         const time = document.createElement('span');
         time.className = 'message-time';
-        const messageTime = message.created_at ? new Date(message.created_at) : new Date();
-        time.textContent = messageTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        const timestamp = message.created_at ?? new Date().toISOString();
+        time.dataset.timestamp = timestamp;
+        time.textContent = formatMessageTime(timestamp);
 
         wrapper.appendChild(sender);
         wrapper.appendChild(bubble);
