@@ -37,6 +37,14 @@ class MessageSent implements ShouldBroadcastNow
     }
 
     /**
+     * Use an explicit event name so frontend listeners are stable.
+     */
+    public function broadcastAs(): string
+    {
+        return 'chat.message.sent';
+    }
+
+    /**
      * Data to broadcast with the event.
      */
     public function broadcastWith(): array

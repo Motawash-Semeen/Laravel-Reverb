@@ -143,7 +143,7 @@
     </div>
     <div class="chat-box" id="chat-box">
         @forelse($messages as $msg)
-        <div class="message-wrapper {{ $msg->user_id === Auth::id() ? 'mine' : 'others' }}">
+        <div class="message-wrapper {{ $msg->user_id === Auth::id() ? 'mine' : 'others' }}" data-message-id="{{ $msg->id }}">
             <span class="message-sender">{{ $msg->user->name }}</span>
             <div class="message-bubble">{{ $msg->message }}</div>
             <span class="message-time">{{ $msg->created_at->format('h:i A') }}</span>
@@ -163,10 +163,19 @@
 @vite(['resources/js/app.js'])
 <script>
     const currentUserId = {{ Auth::id() }};
+    const currentUser = {
+        id: {{ Auth::id() }},
+        name: @json(Auth::user()->name),
+    };
     const chatBox = document.getElementById('chat-box');
     const messageInput = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
     const connectionStatus = document.getElementById('connection-status');
+    const renderedMessageIds = new Set(
+        [...document.querySelectorAll('.message-wrapper[data-message-id]')]
+            .map((node) => Number(node.dataset.messageId))
+            .filter((id) => Number.isFinite(id))
+    );
 
     // Scroll to bottom on page load
     chatBox.scrollTop = chatBox.scrollHeight;
@@ -197,6 +206,10 @@
         })
         .then(response => response.json())
         .then(data => {
+            if (data.message) {
+                appendMessage(currentUser, data.message, true);
+            }
+
             sendBtn.disabled = false;
             messageInput.focus();
         })
@@ -208,12 +221,24 @@
     }
 
     function appendMessage(user, message, isMine) {
+        const messageId = Number(message.id);
+        if (Number.isFinite(messageId) && renderedMessageIds.has(messageId)) {
+            return;
+        }
+
+        if (Number.isFinite(messageId)) {
+            renderedMessageIds.add(messageId);
+        }
+
         // Remove "no messages" placeholder
         const noMessages = document.getElementById('no-messages');
         if (noMessages) noMessages.remove();
 
         const wrapper = document.createElement('div');
         wrapper.className = 'message-wrapper ' + (isMine ? 'mine' : 'others');
+        if (Number.isFinite(messageId)) {
+            wrapper.dataset.messageId = String(messageId);
+        }
 
         const sender = document.createElement('span');
         sender.className = 'message-sender';
@@ -225,8 +250,8 @@
 
         const time = document.createElement('span');
         time.className = 'message-time';
-        const now = new Date();
-        time.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        const messageTime = message.created_at ? new Date(message.created_at) : new Date();
+        time.textContent = messageTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
         wrapper.appendChild(sender);
         wrapper.appendChild(bubble);
@@ -245,7 +270,7 @@
         }
 
         window.Echo.channel('chat')
-            .listen('MessageSent', (e) => {
+            .listen('.chat.message.sent', (e) => {
                 appendMessage(e.user, e.message, e.user.id === currentUserId);
             });
 
